@@ -6,6 +6,7 @@ script_url("blast.hk/threads/59503")
 script_version_number(2)
 
 require 'lib.moonloader'
+local download_status = require('lib.moonloader').download_status
 local sampev = require 'lib.samp.events'
 local inicfg = require 'inicfg'
 local memory = require 'memory'
@@ -70,9 +71,16 @@ function main()
 		end
 	end
 
+	if not isFindServer then
+		print("Данного сервера не найдено в конфиге. Завершаю работу скрипта.")
+		thisScript():unload()
+		return
+	end
+
 	INI = inicfg.load({
 		INI={
 			state=true,
+			isCheckUpdates=true,
 			callsVolume=3,
 			findVolume=3,
 			radioVolume=3.5,
@@ -86,11 +94,7 @@ function main()
 	end
 	inicfg.save(INI, "PoliceDispatchConfig/config.ini")
 
-	if not isFindServer then
-		print("Данного сервера не найдено в конфиге. Завершаю работу скрипта.")
-		thisScript():unload()
-		return
-	end
+	checkUpdates()
 
 	sampRegisterChatCommand('pdradio', mainMenu)
 
@@ -140,6 +144,8 @@ function handleEvent(str, color)
 	vars = concatWithGlobalVars(vars, ev)
 
 	if ev == 'find' then
+		if INI.INI.findVolume == 0 then return false, 'volume' end
+		print("find")
 		-- Если нет обязательного параметра
 		if not vars.area then
 			if markerId then
@@ -176,6 +182,7 @@ function handleEvent(str, color)
 		end
 
 	elseif ev == 'call' then
+		if INI.INI.callsVolume == 0 then return false, 'volume' end
 		if not vars.area or not vars.text then
 			if type(CFG.call.pattern) == 'table' and #CFG.call.pattern > 1 then
 				VARS['call'] = vars
@@ -203,6 +210,7 @@ function handleEvent(str, color)
 		end
 
 	elseif ev == 'radio' then
+		if INI.INI.radioVolume == 0 then return false, 'volume' end
 		if CFG.radio.isPlayShotsFired then
 			if inArray(vars.text, CFG.config.code0Words) then
 				ev = 'code0'
@@ -240,6 +248,7 @@ function handleEvent(str, color)
 		end
 
 	elseif ev == 'user' then
+		if INI.INI.userVolume == 0 then return false, 'volume' end
 		local arrSounds = parceSounds(idUserEvent, vars)
 		if type(arrSounds) == 'table' and #arrSounds > 0 then
 			lua_thread.create(playSounds, arrSounds, 'userVolume', CFG.user[idUserEvent].isPlayRadioOn)
@@ -980,22 +989,54 @@ end
 
 
 
+function checkUpdates()
+	if not INI.INI.isCheckUpdates then return end
+
+	local fpath = os.tmpname()
+	downloadUrlToFile(
+		"https://raw.githubusercontent.com/don-aks/PoliceDispatchLua/main/Police%20Dispatch.lua", 
+		fpath,
+		function(_, status, _, _)
+			if status == download_status.STATUS_ENDDOWNLOADDATA then
+				if doesFileExist(fpath) then
+					local f = io.open(fpath, "r")
+					local f_text = f:read("*a")
+					f:close()
+					local versNum = string.match(f_text, "script_version_number%s*%((%d+)%)")
+
+					if versNum and tonumber(versNum) > thisScript().version_num then
+						local versStr = string.match(f_text, "script_version%s*%([\"'](.-)[\"']%)")
+						chatMessage("Внимание! Доступно обновление {32B4FF}v. "..versStr..'{ffffff}.')
+						chatMessage("Для перехода на страницу скрипта используйте меню {32B4FF}/pdradio{ffffff}.")
+					end
+				end
+			end
+		end
+	)
+end
+
+
+
 function mainMenu()
 	local text = string.format(
 		"Скрипт:\t%s\n".. -- 0
-		"Громкость {FF4400}вызовов 911:\t{FFFFFF}%s\n".. -- 1
-		"Громкость {ABCDEF}/find:\t{FFFFFF}%s\n".. -- 2
-		"Громкость {8D8DFF}/r:\t{FFFFFF}%s\n".. -- 3
-		"Громкость {66DDAA}user-эвентов:\t{FFFFFF}%s\n".. -- 4
-		"  \n".. -- 5
-		"Отключение {66DDAA}user-эвентов\n".. -- 6
-		"Проверка паттерна", -- 7
+		"Проверка обновлений\t%s\n".. -- 1
+		"Громкость {FF4400}вызовов 911:\t{FFFFFF}%s\n".. -- 2
+		"Громкость {ABCDEF}/find:\t{FFFFFF}%s\n".. -- 3
+		"Громкость {8D8DFF}/r:\t{FFFFFF}%s\n".. -- 4
+		"Громкость {66DDAA}user-эвентов:\t{FFFFFF}%s\n".. -- 5
+		"  \n".. -- 6
+		"Отключение {66DDAA}user-эвентов\n".. -- 7
+		"Проверка паттерна\n".. -- 8
+		"  \n".. -- 9
+		"Страница скрипта", -- 10
 
-		(INI.INI.state and "{21C90E}включен." or '{C91A14}отключен.'),
-		INI.INI.callsVolume, 
-		INI.INI.findVolume, 
-		INI.INI.radioVolume,
-		INI.INI.userVolume
+		(INI.INI.state and "{21C90E}Вкл." or '{C91A14}Откл.'),
+		(INI.INI.isCheckUpdates and "{21C90E}Вкл." or '{C91A14}Откл.'),
+		(INI.INI.callsVolume == 0 and "{C91A14}Откл." or INI.INI.callsVolume), 
+		(INI.INI.findVolume == 0 and "{C91A14}Откл." or INI.INI.findVolume),
+		(INI.INI.radioVolume == 0 and "{C91A14}Откл." or INI.INI.radioVolume),
+		(INI.INI.userVolume == 0 and "{C91A14}Откл." or INI.INI.userVolume)
 	)
 	sampShowDialog(20000, "Настройки - Police Dispatch v"..thisScript().version.." | "..CFG.name, text, BTN1, BTN2, 4)
 end
@@ -1010,20 +1051,24 @@ function checkDialogsRespond()
 			inicfg.save(INI, "PoliceDispatchConfig/config.ini")
 			mainMenu()
 		elseif list == 1 then
+			INI.INI.isCheckUpdates = not INI.INI.isCheckUpdates
+			inicfg.save(INI, "PoliceDispatchConfig/config.ini")
+			mainMenu()
+		elseif list == 2 then
 			sampShowDialog(20001, "Громкость {FF4400}вызовов 911:", "Если вы хотите отключить озвучку, введите 0.", 
 				BTN1, BTN2, 1)
-		elseif list == 2 then
+		elseif list == 3 then
 			sampShowDialog(20001, "Громкость {ABCDEF}/find:", "Если вы хотите отключить озвучку, введите 0.", 
 				BTN1, BTN2, 1)
-		elseif list == 3 then
+		elseif list == 4 then
 			sampShowDialog(20001, "Громкость {8D8DFF}/r:", "Если вы хотите отключить озвучку, введите 0.", 
 				BTN1, BTN2, 1)
-		elseif list == 4 then
+		elseif list == 5 then
 			sampShowDialog(20001, "Громкость {66DDAA}user-эвентов:", "Если вы хотите отключить озвучку, введите 0.", 
 				BTN1, BTN2, 1)
-		elseif list == 5 then
-			mainMenu()
 		elseif list == 6 then
+			mainMenu()
+		elseif list == 7 then
 			local userEvents = ""
 			for i, it in ipairs(INI[CFG.name.."_UserEvents"]) do
 				userEvents = userEvents .. CFG.user[i].name.."\t"..(it and "{21C90E}Вкл." or "{C91A14}Откл.").."\n"
@@ -1035,9 +1080,13 @@ function checkDialogsRespond()
 				sampShowDialog(20002, "Отключение user-эвентов", userEvents,
 					BTN1, BTN2, 4)
 			end
-		elseif list == 7 then
+		elseif list == 8 then
 			sampShowDialog(20003, "Проверка паттерна", "Введите нужную строку из чата для проверки и воспроизведения:",
 				BTN1, BTN2, 1)
+		elseif list == 9 then
+			mainMenu()
+		elseif list == 10 then
+			os.execute("start https://"..thisScript().url)
 		end
 	end
 
@@ -1048,10 +1097,10 @@ function checkDialogsRespond()
 			chatMessage("Громкость должно быть числом большим или равным нулю.")
 		else
 			input = tonumber(input)
-			if listMainMenu == 1 then INI.INI.callsVolume = input
-			elseif listMainMenu == 2 then INI.INI.findVolume = input
-			elseif listMainMenu == 3 then INI.INI.radioVolume = input
-			elseif listMainMenu == 4 then INI.INI.userVolume = input end
+			if listMainMenu == 2 then INI.INI.callsVolume = input
+			elseif listMainMenu == 3 then INI.INI.findVolume = input
+			elseif listMainMenu == 4 then INI.INI.radioVolume = input
+			elseif listMainMenu == 5 then INI.INI.userVolume = input end
 			inicfg.save(INI, "PoliceDispatchConfig/config.ini")
 		end
 		mainMenu()
@@ -1083,14 +1132,18 @@ function checkDialogsRespond()
 		if h == false and s == 'not ev' then
 			chatMessage("Эвент не найден. Возможно вы неправильно ввели строку в config.json или в поле для ввода.")
 			chatMessage("Либо, если это user-эвент, он может быть отключен в настройках.")
+		elseif h == false and s == 'volume' then
+			chatMessage("Эвент, который вы пытаетесь воспроизвести, отключен.")
 		elseif h == false then
 			chatMessage("При проверки строки произошла ошибка. Подробнее в moonloader.log.")
 		elseif h == true then
 			chatMessage("Ваша строка содержала мало данных, поэтому сохранена до следующего эвента.")
 			chatMessage("Примечание: как только придет новая строка в чате, данные обнуляться.")
 		else
-			chatMessage("Кажется, все прошло успешно. Не забудьте включить радио!")
+			chatMessage("Кажется, все прошло успешно.")
 		end
+	elseif result then
+		mainMenu()
 	end
 end
 
