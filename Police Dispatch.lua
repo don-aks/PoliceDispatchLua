@@ -37,7 +37,7 @@ function main()
 		f:write(f_text)
 		f:close()
 
-		print("Òåêñò .json ôàéëà, êîòîðûé ÷èòàë ñêðèïò íàõîäèòñÿ â moonloader/config/PoliceDispatchConfig/json_err.log")
+		print("Òåêñò .json ôàéëà, êîòîðûé ÷èòàë ñêðèïò íàõîäèòñÿ â moonloader/config/PoliceDispatch/json_err.log")
 		chatMessage("Íå óäàëîñü ñ÷èòàòü .json ôàéë! Ïîäðîáíîñòè â moonloader.log.")
 		thisScript():unload()
 		return
@@ -221,9 +221,9 @@ function handleEvent(str, color)
 		end
 
 		-- Ïîëüçîâàòåëüñêèå ýâåíòû íà ðàäèî
-		if 	ev == 'radio' and 
-			type(CFG.radio.userMessages) == "table" and 
-			#CFG.radio.userMessages > 0 
+		if 	ev == 'radio' and
+			type(CFG.radio.userMessages) == "table"-- and
+			--#CFG.radio.userMessages > 0
 		then
 			for _, usermsg in ipairs(CFG.radio.userMessages) do
 				print(vars.text, usermsg.textFind)
@@ -255,7 +255,8 @@ function handleEvent(str, color)
 			lua_thread.create(playSounds, arrSounds, 'userVolume', CFG.user[idUserEvent].isPlayRadioOn)
 			return
 		else
-			return arrSounds
+			print('Ìàññèâ "sounds" â ïîëüçîâàòåëüñêîì ýâåíòå '..CFG.user[idUserEvent].name..' íå óêàçàí!')
+			return false
 		end
 	end
 
@@ -516,26 +517,22 @@ function parceSounds(idUserEvent, vars)
 						print("Èêîíêà íà êàðòå ñ id "..markerId.." â ýâåíòå user íå íàéäåíà.")
 						return false
 					end
-					sound = getAreaSoundPatch(area)
+
+					local newSound = getAreaSoundPatch(area)
 					if not sound then
 						print("Îøèáêà â çâóêå '"..sound.."' (¹"..i..") â user ýâåíòå '"..CFGuser.name.."'!")
 						print("@area íå íàéäåíî.")
 						return false
 					end
+					sound = newSound
 
 				elseif varname == 'veh' then
 					if vars.id or vars.nick then
 						vars.id = tonumber(vars.id) or sampGetPlayerIdByNickname(vars.nick)
-						local playerInStream, playerHandle = sampGetCharHandleBySampPlayerId(vars.id)
-						
-						if playerInStream and isCharInAnyCar(playerHandle) then
-							local carHandle = storeCarCharIsInNoSave(playerHandle)
-							vars.vehid = getCarModel(carHandle)
-							vars.vehcolor, _ = getCarColours(carHandle)
-
+						res, vars.vehid, vars.vehcolor = getVehIdAndColorByPlayerId(vars.id)
+						if res then
 							table.insert(arrSounds, getVehSound(vars.vehid))
-							table.insert(arrSounds, getCarColorSound(vars.vehcolor))
-							sound = nil
+							sound = getCarColorSound(vars.vehcolor)
 						else
 							print("Îøèáêà â çâóêå '"..sound.."' (¹"..i..") â user ýâåíòå '"..CFGuser.name.."'!")
 							print("Ïåðåìåííîé @vehname èëè @vehid íåò â ñòðîêå!")
@@ -554,18 +551,20 @@ function parceSounds(idUserEvent, vars)
 				end
 
 			-- Åñòü êîíñòðóêöèÿ ñ ïîëüçîâàòåëüñêèìè çàìåíàìè ïåðåìåííûõ
-			elseif 
-				CFGuser.vars and
-				((CFGuser.vars[varname]) or
-					(varname == 'veh' and (
-							CFGuser.vars['vehname'] or
-							CFGuser.vars['vehid']
-						)
+			elseif
+				CFGuser.vars and 
+				(
+					(CFGuser.vars[varname]) or (
+						varname == 'veh' and
+						-- äëÿ veh äðóãèå ïåðåìåííûå
+						(CFGuser.vars['vehname'] or CFGuser.vars['vehid'])
 					)
 				)
 			then
 				if varname ~= 'veh' then
-					newSound = CFGuser.vars[varname][vars[varname]]
+					-- Çàìåíèòü, åñëè íóæíî áóäåò íå ó÷èòûâàòü ðåãèñòð
+					-- â çíà÷åíèÿõ ïîëüçîâàòåëüñêèõ ïåðåìåííûõ.
+					newSound = CFGuser.vars[varname] [vars[varname]]
 					if newSound then
 						sound = newSound
 					else
@@ -574,7 +573,10 @@ function parceSounds(idUserEvent, vars)
 					end
 				end
 
-				-- Äîïîëíèòåëüíàÿ îáðàáîòêà ïåðåìåííûõ.
+				-- Îáðàáîòêà çíà÷åíèÿ ïåðåìåííûõ êàê çâóêà.
+				-- Ïî ñóòè òà æå ôóíêöèÿ êàê â else íèæå.
+				-- Íóæíî óïðîñòèòü.
+				-- À òàêæå ïðîòåñòèòü. Çàãàäêà îò Æàêà Ôðåñêî.
 				if varname == 'area' then
 					local area = sound
 					sound = getAreaSoundPatch(area)
@@ -585,6 +587,9 @@ function parceSounds(idUserEvent, vars)
 					end
 				elseif varname == 'veh' then
 					if vars['vehname'] or vars['vehid'] then
+						-- Õì... Êàê æå óïðîñòèòü.
+						-- Çàãàäêà îò æàêà Ôðåñêî.
+						-- À íå ïîõóé ëè?
 						if CFGuser.vars['vehname'] then
 							local newSound = CFGuser.vars.vehname[vars.vehname]
 							if newSound then
@@ -600,6 +605,7 @@ function parceSounds(idUserEvent, vars)
 
 						vars.vehid = vars.vehid or vars.vehname and getCarModelByName(vars.vehname)
 						sound = getVehSound(vars.vehid)
+
 						if not sound then
 							print("Îøèáêà â çâóêå '@veh' (¹"..i..") â user ýâåíòå '"..CFGuser.name.."'!")
 							if vars.vehid then
@@ -610,26 +616,15 @@ function parceSounds(idUserEvent, vars)
 							return false
 						end
 
-						if CFGuser.veh and vars.vehname == CFGuser.vehOnFoot then
-							table.insert(arrSounds, DISPATCH_SOUNDS.suspect.onFoot)
-							sound = nil
-
+						if vars.vehname and vars.vehname == CFGuser.vehOnFoot then
+							sound = DISPATCH_SOUNDS.suspect.onFoot
 						elseif vars.id or vars.nick then
+							-- Áåðåì èíôó èç èãðîêà, åñëè òîò â ñòðèìå.
 							vars.id = tonumber(vars.id) or sampGetPlayerIdByNickname(vars.nick)
-							local playerInStream, playerHandle = sampGetCharHandleBySampPlayerId(vars.id)
-							if playerInStream and isCharInAnyCar(playerHandle) then
-								local carHandle = storeCarCharIsInNoSave(playerHandle)
-								vars.vehid = getCarModel(carHandle)
-								vars.vehcolor, _ = getCarColours(carHandle)
-
+							res, vars.vehid, vars.vehcolor = getVehIdAndColorByPlayerId(vars.id)
+							if res then
 								table.insert(arrSounds, getVehSound(vars.vehid))
-								table.insert(arrSounds, getCarColorSound(vars.vehcolor))
-								sound = nil
-							else
-								print("Îøèáêà â çâóêå '"..sound.."' (¹"..i..") â user ýâåíòå '"..CFGuser.name.."'!")
-								print("Ïåðåìåííîé @vehname èëè @vehid íåò â ñòðîêå!")
-								print("È èãðîê, óêàçàííûé â ïåðåìåííûõ @id èëè @nick âíå çîíå ñòðèìà!")
-								return false 
+								sound = getCarColorSound(vars.vehcolor)
 							end
 						end
 					else
@@ -677,22 +672,31 @@ function parceSounds(idUserEvent, vars)
 					end
 
 				elseif varname == 'veh' then
+					-- Ïî÷åìó íå áåðåòñÿ èíôà èç âîçìîæíîãî èãðîêà
+					-- â çîíå ñòðèìà
 					if vars['vehname'] or vars['vehid'] then
 						vars.vehid = vars.vehid or vars.vehname and getCarModelByName(vars.vehname)
 						sound = getVehSound(vars.vehid)
+						if not sound then
+							print("Îøèáêà â çâóêå '@veh' (¹"..i..") â user ýâåíòå '"..CFGuser.name.."'!")
+							if vars.vehid then
+								print("Àâòîìîáèëü ñ id '"..tostring(vars.vehid).."' íå áûë íàéäåí!")
+							elseif vars.vehname then
+								print("Àâòîìîáèëü ñ íàçâàíèåì '"..tostring(vars.vehname).."' íå áûë íàéäåí!")
+							end
+							return false
+						end
 
 						if CFGuser.veh and vars.vehname == CFGuser.vehOnFoot then
 							sound = DISPATCH_SOUNDS.suspect.onFoot
 						elseif vars.id or vars.nick then
+							-- Áåðåì èíôó èç èãðîêà, åñëè òîò â ñòðèìå.
 							vars.id = tonumber(vars.id) or sampGetPlayerIdByNickname(vars.nick)
-							local playerInStream, playerHandle = sampGetCharHandleBySampPlayerId(vars.id)
-							if playerInStream and isCharInAnyCar(playerHandle) then
-								local carHandle = storeCarCharIsInNoSave(playerHandle)
-								vars.vehcolor, _ = getCarColours(carHandle)
+							res, vars.vehid, vars.vehcolor = getVehIdAndColorByPlayerId(vars.id)
 
-								table.insert(arrSounds, vars.vehid)
-								table.insert(arrSounds, vars.vehcolor)
-								sound = nil
+							if res then
+								table.insert(arrSounds, getVehSound(vars.vehid))
+								sound = getCarColorSound(vars.vehcolor)
 							end
 						end
 					else
@@ -718,6 +722,20 @@ function parceSounds(idUserEvent, vars)
 	end
 
 	return arrSounds
+end
+
+
+function getVehIdAndColorByPlayerId(id)
+	local playerInStream, playerHandle = sampGetCharHandleBySampPlayerId(id)
+	if playerInStream and isCharInAnyCar(playerHandle) then
+		local carHandle = storeCarCharIsInNoSave(playerHandle)
+		local vehId = getCarModel(carHandle)
+		local vehColor, _ = getCarColours(carHandle)
+
+		return true, vehId, vehColor
+	else
+		return false
+	end
 end
 
 
