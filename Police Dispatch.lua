@@ -222,11 +222,10 @@ function handleEvent(str, color)
 
 		-- Ïîëüçîâàòåëüñêèå ýâåíòû íà ðàäèî
 		if 	ev == 'radio' and
-			type(CFG.radio.userMessages) == "table"-- and
-			--#CFG.radio.userMessages > 0
+			type(CFG.radio.userMessages) == "table" and
+			#CFG.radio.userMessages > 0
 		then
 			for _, usermsg in ipairs(CFG.radio.userMessages) do
-				print(vars.text, usermsg.textFind)
 				if inArray(vars.text, toTable(usermsg.textFind), usermsg.useRegexInPattern) then
 					local sounds = toTable(usermsg.sounds)
 					for i, sound in ipairs(sounds) do
@@ -245,7 +244,9 @@ function handleEvent(str, color)
 				end
 			end
 		elseif inArray(vars.text, QUESTION_WORDS) then
-			return
+			return false, 'question words'
+		else
+			return false, 'not ev'
 		end
 
 	elseif ev == 'user' then
@@ -1153,6 +1154,8 @@ function checkDialogsRespond()
 			chatMessage("Ëèáî, åñëè ýòî user-ýâåíò, îí ìîæåò áûòü îòêëþ÷åí â íàñòðîéêàõ.")
 		elseif h == false and s == 'volume' then
 			chatMessage("Ýâåíò, êîòîðûé âû ïûòàåòåñü âîñïðîèçâåñòè, îòêëþ÷åí.")
+		elseif h == false and s == 'question words' then
+			chatMessage("Â ñîîáùåíèè ïî ðàöèè íàéäåíî âîïðîñèòåëüíîå ñëîâî.")
 		elseif h == false then
 			chatMessage("Ïðè ïðîâåðêè ñòðîêè ïðîèçîøëà îøèáêà. Ïîäðîáíåå â moonloader.log.")
 		elseif h == true then
