@@ -1,2 +1,2 @@
-*.lua		text working-tree-encoding=windows-1252
-*.json		text working-tree-encoding=windows-1252
+*.lua		text working-tree-encoding=windows-1252 eol=CRLF
+*.json		text working-tree-encoding=windows-1252 eol=CRLF
