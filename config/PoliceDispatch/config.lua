@@ -1,8 +1,8 @@
--- vk.com/donakslua
+-- encoding: cyrillic (windows 1251)
 script_author('donaks')
 
--- string.lower и string.upper не работает с русскими символами
--- поэтому отдельная функция с переделыванием.
+-- string.lower ГЁ string.upper Г­ГҐ Г°Г ГЎГ®ГІГ ГҐГІ Г± Г°ГіГ±Г±ГЄГЁГ¬ГЁ Г±ГЁГ¬ГўГ®Г«Г Г¬ГЁ
+-- ГЇГ®ГЅГІГ®Г¬Гі Г®ГІГ¤ГҐГ«ГјГ­Г Гї ГґГіГ­ГЄГ¶ГЁГї Г± ГЇГҐГ°ГҐГ¤ГҐГ«Г»ГўГ Г­ГЁГҐГ¬.
 local lu_rus, ul_rus = {}, {}
 for i = 192, 223 do
 	local A, a = string.char(i), string.char(i + 32)
@@ -21,13 +21,13 @@ end
 
 function scandir(directory)
 	--[[
-		Возвращает массив всех файлов в директории.
+		Г‚Г®Г§ГўГ°Г Г№Г ГҐГІ Г¬Г Г±Г±ГЁГў ГўГ±ГҐГµ ГґГ Г©Г«Г®Гў Гў Г¤ГЁГ°ГҐГЄГІГ®Г°ГЁГЁ.
 	]]
     local i, t = 0, {}
     local pfile = io.popen('dir "'..directory..'" /b')
     for filename in pfile:lines() do
         i = i + 1
-        -- если содержит точку (файл, а не папка)
+        -- ГҐГ±Г«ГЁ Г±Г®Г¤ГҐГ°Г¦ГЁГІ ГІГ®Г·ГЄГі (ГґГ Г©Г«, Г  Г­ГҐ ГЇГ ГЇГЄГ )
         if filename:find("%.") then
         	t[i] = directory..filename
         end
@@ -37,72 +37,74 @@ function scandir(directory)
 end
 
 
-PATCH = {
-	config=getWorkingDirectory().."\\config\\PoliceDispatchConfig\\",
-	area="audio\\areas\\",
-	code1="audio\\code1\\",
-	code0="audio\\code0\\",
-	gangActivity="audio\\gangActivity\\",
-	areaAndCode="audio\\areaAndCode\\",
-	vehicles="audio\\vehicles\\"
+PATH = {
+	config=getWorkingDirectory().."\\config\\PoliceDispatch\\",
+	audio=getWorkingDirectory().."\\resource\\PoliceDispatchAudio\\",
+	area="areas\\",
+	code1="code1\\",
+	code0="code0\\",
+	gangActivity="gangActivity\\",
+	areaAndCode="areaAndCode\\",
+	vehicles="vehicles\\",
+	colors="colors\\"
 }
 
 -- DISP.
 DISPATCH_SOUNDS = {
-	radioOn=PATCH.config.."audio\\radio_on.wav",
+	radioOn=PATH.audio.."radio_on.wav",
 	suspect={
-		inWater=PATCH.config.."audio\\suspect\\In water.wav",
-		onFoot=PATCH.config.."audio\\suspect\\On foot.wav",
-		lastSeen=PATCH.config.."audio\\suspect\\Suspect last seen.wav",
-		suspectInWater=PATCH.config.."audio\\suspect\\Suspect in water.wav",
-		suspect1=PATCH.config.."audio\\suspect\\Suspect1.wav",
-		suspect2=PATCH.config.."audio\\suspect\\Suspect2.wav"
+		inWater=PATH.audio.."suspect\\In water.wav",
+		onFoot=PATH.audioaudio.."suspect\\On foot.wav",
+		lastSeen=PATH.audio.."suspect\\Suspect last seen.wav",
+		suspectInWater=PATH.audio.."suspect\\Suspect in water.wav",
+		suspect1=PATH.audio.."suspect\\Suspect1.wav",
+		suspect2=PATH.audio.."suspect\\Suspect2.wav"
 	},
 	codesWithIn={
-		[7]=PATCH.config.."audio\\ten_codes\\7 in.wav",
-		[17]=PATCH.config.."audio\\ten_codes\\17 in.wav",
-		[21]=PATCH.config.."audio\\ten_codes\\21 in.wav",
-		[24]=PATCH.config.."audio\\ten_codes\\24 in.wav",
-		[28]=PATCH.config.."audio\\ten_codes\\28 in.wav",
-		[34]=PATCH.config.."audio\\ten_codes\\34 in.wav",
-		[37]=PATCH.config.."audio\\ten_codes\\37 in.wav",
-		[71]=PATCH.config.."audio\\ten_codes\\71 in.wav",
-		[81]=PATCH.config.."audio\\ten_codes\\81 in.wav",
-		[90]=PATCH.config.."audio\\ten_codes\\90 in.wav",
-		[91]=PATCH.config.."audio\\ten_codes\\91 in.wav"
+		[7]=PATH.audio.."ten_codes\\7 in.wav",
+		[17]=PATH.audio.."ten_codes\\17 in.wav",
+		[21]=PATH.audio.."ten_codes\\21 in.wav",
+		[24]=PATH.audio.."ten_codes\\24 in.wav",
+		[28]=PATH.audio.."ten_codes\\28 in.wav",
+		[34]=PATH.audio.."ten_codes\\34 in.wav",
+		[37]=PATH.audio.."ten_codes\\37 in.wav",
+		[71]=PATH.audio.."ten_codes\\71 in.wav",
+		[81]=PATH.audio.."ten_codes\\81 in.wav",
+		[90]=PATH.audio.."ten_codes\\90 in.wav",
+		[91]=PATH.audio.."ten_codes\\91 in.wav"
 	},
 	codes={
-		[7]=PATCH.config.."audio\\ten_codes\\7.wav",
-		[17]=PATCH.config.."audio\\ten_codes\\17.wav",
-		[21]=PATCH.config.."audio\\ten_codes\\21.wav",
-		[24]=PATCH.config.."audio\\ten_codes\\24.wav",
-		[28]=PATCH.config.."audio\\ten_codes\\28.wav",
-		[34]=PATCH.config.."audio\\ten_codes\\34.wav",
-		[37]=PATCH.config.."audio\\ten_codes\\37.wav",
-		[71]=PATCH.config.."audio\\ten_codes\\71.wav",
-		[81]=PATCH.config.."audio\\ten_codes\\81.wav",
-		[90]=PATCH.config.."audio\\ten_codes\\90.wav",
-		[91]=PATCH.config.."audio\\ten_codes\\91.wav"
+		[7]=PATH.audio.."ten_codes\\7.wav",
+		[17]=PATH.audio.."ten_codes\\17.wav",
+		[21]=PATH.audio.."ten_codes\\21.wav",
+		[24]=PATH.audio.."ten_codes\\24.wav",
+		[28]=PATH.audio.."ten_codes\\28.wav",
+		[34]=PATH.audio.."ten_codes\\34.wav",
+		[37]=PATH.audio.."ten_codes\\37.wav",
+		[71]=PATH.audio.."ten_codes\\71.wav",
+		[81]=PATH.audio.."ten_codes\\81.wav",
+		[90]=PATH.audio.."ten_codes\\90.wav",
+		[91]=PATH.audio.."ten_codes\\91.wav"
 	},
 	words={
-		headTo10=PATCH.config.."audio\\suspect\\Head to a 10-.wav",
-		respondTo10=PATCH.config.."audio\\suspect\\Respond to a 10-.wav",
-		weGot10=PATCH.config.."audio\\suspect\\We got a 10-.wav",
-		inA=PATCH.config.."audio\\suspect\\In a.wav",
-		onA=PATCH.config.."audio\\suspect\\On a.wav",
-		attempt=PATCH.config.."audio\\ten_codes\\attempt.wav"
+		headTo10=PATH.audio.."suspect\\Head to a 10-.wav",
+		respondTo10=PATH.audio.."suspect\\Respond to a 10-.wav",
+		weGot10=PATH.audio.."suspect\\We got a 10-.wav",
+		inA=PATH.audio.."suspect\\In a.wav",
+		onA=PATH.audio.."suspect\\On a.wav",
+		attempt=PATH.audio.."ten_codes\\attempt.wav"
 	}
 }
 
--- Хранит в себе все файлы 
-CODE_0_SOUNDS = scandir(PATCH.config..PATCH.code0)
-CODE_1_SOUNDS = scandir(PATCH.config..PATCH.code1)
-GANG_ACTIVITY_SOUNDS = scandir(PATCH.config..PATCH.gangActivity)
-AREA_AND_CODE_SOUNDS = scandir(PATCH.config..PATCH.areaAndCode)
+-- Г•Г°Г Г­ГЁГІ Гў Г±ГҐГЎГҐ ГўГ±ГҐ ГґГ Г©Г«Г» 
+CODE_0_SOUNDS = scandir(PATH.config..PATH.code0)
+CODE_1_SOUNDS = scandir(PATH.config..PATH.code1)
+GANG_ACTIVITY_SOUNDS = scandir(PATH.config..PATH.gangActivity)
+AREA_AND_CODE_SOUNDS = scandir(PATH.config..PATH.areaAndCode)
 
--- Ключ - ИмяФайлаСЦветом.wav.
--- Значение массив идентификаторов цветов, которые к нему относятся.
--- Был написан вручную. В коде берется только первый цвет авто, второй игнорируется.
+-- ГЉГ«ГѕГ· - Г€Г¬ГїГ”Г Г©Г«Г Г‘Г–ГўГҐГІГ®Г¬.wav.
+-- Г‡Г­Г Г·ГҐГ­ГЁГҐ Г¬Г Г±Г±ГЁГў ГЁГ¤ГҐГ­ГІГЁГґГЁГЄГ ГІГ®Г°Г®Гў Г¶ГўГҐГІГ®Гў, ГЄГ®ГІГ®Г°Г»ГҐ ГЄ Г­ГҐГ¬Гі Г®ГІГ­Г®Г±ГїГІГ±Гї.
+-- ГЃГ»Г« Г­Г ГЇГЁГ±Г Г­ ГўГ°ГіГ·Г­ГіГѕ. Г‚ ГЄГ®Г¤ГҐ ГЎГҐГ°ГҐГІГ±Гї ГІГ®Г«ГјГЄГ® ГЇГҐГ°ГўГ»Г© Г¶ГўГҐГІ Г ГўГІГ®, ГўГІГ®Г°Г®Г© ГЁГЈГ­Г®Г°ГЁГ°ГіГҐГІГ±Гї.
 COLORS = {
 	Blue={2, 7, 12, 10, 20, 28, 32, 39, 53, 54, 59, 67, 71, 75, 79, 87, 91, 93, 94, 95, 97, 98, 100, 101, 103, 106, 108, 116, 116, 125, 130, 134, 135, 139, 152, 155, 157, 162, 163, 165, 166, 198, 201, 203, 204, 208, 209, 210, 217, 223, 240, 246, 255},
 	Black={0, 36, 40, 127, 129, 133, 148, 164, 186, 205, 206, 215, 236},
@@ -116,9 +118,9 @@ COLORS = {
 	White={1, 14, 15, 63, 64, 68, 76, 89, 90, 96}
 }
 
--- Классификации авто, которые называет диспетчер
--- Ключ - ИмяФайлаСНазваниемАвто.wav
--- Значение - иды автомобилей, которые к ним относятся.
+-- ГЉГ«Г Г±Г±ГЁГґГЁГЄГ Г¶ГЁГЁ Г ГўГІГ®, ГЄГ®ГІГ®Г°Г»ГҐ Г­Г Г§Г»ГўГ ГҐГІ Г¤ГЁГ±ГЇГҐГІГ·ГҐГ°
+-- ГЉГ«ГѕГ· - Г€Г¬ГїГ”Г Г©Г«Г Г‘ГЌГ Г§ГўГ Г­ГЁГҐГ¬ГЂГўГІГ®.wav
+-- Г‡Г­Г Г·ГҐГ­ГЁГҐ - ГЁГ¤Г» Г ГўГІГ®Г¬Г®ГЎГЁГ«ГҐГ©, ГЄГ®ГІГ®Г°Г»ГҐ ГЄ Г­ГЁГ¬ Г®ГІГ­Г®Г±ГїГІГ±Гї.
 CARS = {
 	["2 Door"]={434, 542, 583},
 	["4 Door"]={405, 421, 426, 445, 466, 467, 492, 507, 529, 540, 546, 547, 550, 551, 580, 585, 604},
@@ -170,8 +172,8 @@ CARS = {
 	["Van"]={413, 414, 428, 433, 440, 456, 459, 478, 482, 498, 499, 552, 582, 588, 609}
 }
 
--- районы, которые не озвучивает диспетчер
--- Ключ: название района, значение: район, на который заменять.
+-- Г°Г Г©Г®Г­Г», ГЄГ®ГІГ®Г°Г»ГҐ Г­ГҐ Г®Г§ГўГіГ·ГЁГўГ ГҐГІ Г¤ГЁГ±ГЇГҐГІГ·ГҐГ°
+-- ГЉГ«ГѕГ·: Г­Г Г§ГўГ Г­ГЁГҐ Г°Г Г©Г®Г­Г , Г§Г­Г Г·ГҐГ­ГЁГҐ: Г°Г Г©Г®Г­, Г­Г  ГЄГ®ГІГ®Г°Г»Г© Г§Г Г¬ГҐГ­ГїГІГј.
 AREAS_NOT_VOICED = {
 	["the strip"]="Las Venturas",
 	["jefferson"]="East Los Santos",
@@ -202,22 +204,22 @@ AREAS_NOT_VOICED = {
 	["area 51"]="Bone County"
 }
 
--- Если в рации есть вопросительное слово и код 1 или код 0 слово,
--- к примеру: "Почему был объявлен code-0?" или "Кто объявил код 0?",
--- звук не проигрывается.
+-- Г…Г±Г«ГЁ Гў Г°Г Г¶ГЁГЁ ГҐГ±ГІГј ГўГ®ГЇГ°Г®Г±ГЁГІГҐГ«ГјГ­Г®ГҐ Г±Г«Г®ГўГ® ГЁ ГЄГ®Г¤ 1 ГЁГ«ГЁ ГЄГ®Г¤ 0 Г±Г«Г®ГўГ®,
+-- ГЄ ГЇГ°ГЁГ¬ГҐГ°Гі: "ГЏГ®Г·ГҐГ¬Гі ГЎГ»Г« Г®ГЎГєГїГўГ«ГҐГ­ code-0?" ГЁГ«ГЁ "ГЉГІГ® Г®ГЎГєГїГўГЁГ« ГЄГ®Г¤ 0?",
+-- Г§ГўГіГЄ Г­ГҐ ГЇГ°Г®ГЁГЈГ°Г»ГўГ ГҐГІГ±Гї.
 QUESTION_WORDS = {
-	"что", "почему", "зачем", "куда", "кто", "когда", "где", "откуда", "чей", "как"
+	"Г·ГІГ®", "ГЇГ®Г·ГҐГ¬Гі", "Г§Г Г·ГҐГ¬", "ГЄГіГ¤Г ", "ГЄГІГ®", "ГЄГ®ГЈГ¤Г ", "ГЈГ¤ГҐ", "Г®ГІГЄГіГ¤Г ", "Г·ГҐГ©", "ГЄГ ГЄ"
 }
 
-BTN1 = "Выбрать"
-BTN2 = "Отмена"
+BTN1 = "Г‚Г»ГЎГ°Г ГІГј"
+BTN2 = "ГЋГІГ¬ГҐГ­Г "
 
 
 
 
 
 
--- Далее идут массивы с названиями автомобилей и районов.
+-- Г„Г Г«ГҐГҐ ГЁГ¤ГіГІ Г¬Г Г±Г±ГЁГўГ» Г± Г­Г Г§ГўГ Г­ГЁГїГ¬ГЁ Г ГўГІГ®Г¬Г®ГЎГЁГ«ГҐГ© ГЁ Г°Г Г©Г®Г­Г®Гў.
 
 CAR_NAMES = {
 	[400] = "Landstalker",
@@ -279,7 +281,7 @@ CAR_NAMES = {
 	[456] = "Yankee",
 	[457] = "Caddy",
 	[458] = "Solair",
-	[459] = "Topfun Van (Berkley’s RC)",
+	[459] = "Topfun Van (BerkleyвЂ™s RC)",
 	[460] = "Skimmer",
 	[461] = "PCJ-600",
 	[462] = "Faggio",
@@ -376,8 +378,8 @@ CAR_NAMES = {
 	[553] = "Nevada",
 	[554] = "Yosemite",
 	[555] = "Windsor",
-	[556] = "Monster «A»",
-	[557] = "Monster «B»",
+	[556] = "Monster В«AВ»",
+	[557] = "Monster В«BВ»",
 	[558] = "Uranus",
 	[559] = "Jester",
 	[560] = "Sultan",
@@ -426,8 +428,8 @@ CAR_NAMES = {
 	[603] = "Phoenix",
 	[604] = "Glendale",
 	[605] = "Sadler",
-	[606] = "Baggage Trailer «A»",
-	[607] = "Baggage Trailer «B»",
+	[606] = "Baggage Trailer В«AВ»",
+	[607] = "Baggage Trailer В«BВ»",
 	[608] = "Tug Stairs Trailer",
 	[609] = "Boxville",
 	[610] = "Farm Trailer",
