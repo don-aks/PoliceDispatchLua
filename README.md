@@ -5,6 +5,7 @@
 
 ## Библиотеки для работы скрипта
 [SAMP.LUA](https://github.com/THE-FYP/SAMP.Lua/releases/)
+
 **Установка:** Закинуть содержимое архива в папку _moonloader/lib_.
 
 ## Что делает скрипт?
