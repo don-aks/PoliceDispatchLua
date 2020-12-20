@@ -97,10 +97,10 @@ DISPATCH_SOUNDS = {
 }
 
 -- Õðàíèò â ñåáå âñå ôàéëû 
-CODE_0_SOUNDS = scandir(PATH.config..PATH.code0)
-CODE_1_SOUNDS = scandir(PATH.config..PATH.code1)
-GANG_ACTIVITY_SOUNDS = scandir(PATH.config..PATH.gangActivity)
-AREA_AND_CODE_SOUNDS = scandir(PATH.config..PATH.areaAndCode)
+CODE_0_SOUNDS = scandir(PATH.audio..PATH.code0)
+CODE_1_SOUNDS = scandir(PATH.audio..PATH.code1)
+GANG_ACTIVITY_SOUNDS = scandir(PATH.audio..PATH.gangActivity)
+AREA_AND_CODE_SOUNDS = scandir(PATH.audio..PATH.areaAndCode)
 
 -- Êëþ÷ - ÈìÿÔàéëàÑÖâåòîì.wav.
 -- Çíà÷åíèå ìàññèâ èäåíòèôèêàòîðîâ öâåòîâ, êîòîðûå ê íåìó îòíîñÿòñÿ.
