@@ -43,6 +43,7 @@ function main()
 		return
 	end
 
+
 	local serverName = sampGetCurrentServerName()
 	local ip, port = sampGetCurrentServerAddress()
 	local serverIP = ip..":"..port
@@ -63,20 +64,13 @@ function main()
 		end
 	end
 
-	-- Ïîäãðóçêà .ini
-	local tUser = {}
-	if CFG.user then
-		for i, it in ipairs(CFG.user) do
-			tUser[i] = true
-		end
-	end
-
 	if not isFindServer then
 		print("Äàííîãî ñåðâåðà íå íàéäåíî â êîíôèãå. Çàâåðøàþ ðàáîòó ñêðèïòà.")
 		thisScript():unload()
 		return
 	end
 
+	-- Ïîäãðóçêà .ini
 	INI = inicfg.load({
 		INI={
 			state=true,
@@ -88,17 +82,26 @@ function main()
 		}
 	}, PATH.config.."/config.ini")
 
+	-- Îáíîâëåíèå âêëþ÷åíèé/îòêëþ÷åíèé 
+	-- ïîëüçîâàòåëüñêèõ ýâåíòîâ
+	local tUser = {}
+	if CFG.user then
+		for i, it in ipairs(CFG.user) do
+			tUser[i] = true
+		end
+	end
+
 	local keyServer = CFG.name.."_UserEvents"
-	if #tUser > 0 and (not INI[keyServer] or #tUser ~= #INI[keyServer]) then
-		INI[keyServer] = tUser
+	if #tUser > 0 then
+		if not INI[keyServer] or #tUser ~= #INI[keyServer] then
+			INI[keyServer] = tUser
+		end
 	end
 
 	saveIni()
 
 	checkUpdates()
-
 	sampRegisterChatCommand('pdradio', mainMenu)
-
 
 	if INI.INI.state then
 		chatMessage("Çàãðóæåí. Óïðàâëåíèå ñêðèïòîì: {32B4FF}/pdradio{FFFFFF}. Àâòîð: {32B4FF}vk.com/donakslua{FFFFFF}.")
@@ -110,6 +113,7 @@ function main()
 	if INI.INI.state and radioVol == 0 then
 		chatMessage("Âíèìàíèå! Ó âàñ îòêëþ÷åíî ðàäèî â íàñòðîéêàõ. Âêëþ÷èòå åãî, åñëè õîòèòå ÷òî-òî óñëûøàòü.")
 	end
+
 
 	while true do
 		wait(0)
@@ -129,6 +133,9 @@ end
 
 
 
+-- MAIN FUNCTION --
+
+-- HANDLER EVENTS --
 function handleEvent(str, color)
 	local ev, pattern, markerId, idUserEvent = getEventInfo(str, color)
 	if not ev then
@@ -143,6 +150,7 @@ function handleEvent(str, color)
 	local vars = getVariablesFromMessage(str, pattern)
 	-- ×åêàåì îñòàëñÿ ëè ãëîáàëüíûé VARS îò ïðåäûäóùåãî âûçîâà.
 	vars = concatWithGlobalVars(vars, ev)
+	print('ev = '..tostring(ev))
 
 	if ev == 'find' then
 		if INI.INI.findVolume == 0 then return false, 'volume' end
@@ -213,12 +221,15 @@ function handleEvent(str, color)
 	elseif ev == 'radio' then
 		if INI.INI.radioVolume == 0 then return false, 'volume' end
 		if CFG.radio.isPlayShotsFired then
+			print("CFG.radio.isPlayShotsFired = true")
 			if inArray(vars.text, CFG.config.code0Words) then
 				ev = 'code0'
 			elseif inArray(vars.text, CFG.config.code1Words) then
 				ev = 'code1'
 			end
 		end
+
+		print('now ev = '..ev)
 
 		-- Ïîëüçîâàòåëüñêèå ýâåíòû íà ðàäèî
 		if 	ev == 'radio' and
@@ -245,8 +256,8 @@ function handleEvent(str, color)
 			end
 		elseif inArray(vars.text, QUESTION_WORDS) then
 			return false, 'question words'
-		else
-			return false, 'not ev'
+		elseif ev == 'radio' then
+			return false, 'text radio'
 		end
 
 	elseif ev == 'user' then
@@ -264,56 +275,43 @@ function handleEvent(str, color)
 	playDispatch(ev, vars)
 end
 
+function getVariablesFromMessage(message, pattern)
+	-- âîçâðàùàåò ìàññèâ {var: value}
+	local varsAndValues = {}
+	local vars = {}
 
+	-- èùåì âñå @var
+	local start = 1
+	local var
+	for _ = 1, #message do
+		_, start, var = pattern:find("@([%a_]+)", start)
+		if var then
+			table.insert(vars, var)
+		else
+			break
+		end
+	end
 
-
-function playDispatch(event, vars)
-	local CFGev = CFG[event]
-
-	if event == 'call' then
-		lua_thread.create(playSounds, {
-			DISPATCH_SOUNDS.words.weGot10,
-			randomChoice(DISPATCH_SOUNDS.codesWithIn),
-			getAreaSoundPatch(vars.area)
-		}, 'callsVolume', true)
-
-	elseif event == 'gangActivity' then
-		-- ôóíêöèÿ äëÿ ôàéëîâ òèïà Jefferson2.
-		local msgs = {}
-		for _, fname in ipairs(GANG_ACTIVITY_SOUNDS) do
-			if fname:find(vars.area, 1, true) then
-				msgs[#msgs+1] = fname
-			end
+	for _, var in ipairs(vars) do
+		local patternFindVar = "(.+)"
+		if var == 'n' or var == 'id' then
+			patternFindVar = "(%d+)"
 		end
 
-		lua_thread.create(playSounds, randomChoice(msgs), 'callsVolume')
+		local patternWithoutVar = pattern:gsub("@"..var, patternFindVar):gsub("@([%a_]+)", '.+')
+		varsAndValues[var] = message:match(patternWithoutVar)
 
-	elseif event == 'areaAndCode' then
-		lua_thread.create(playSounds, PATH.audio..PATH.areaAndCode..vars.area..'.ogg', 'callsVolume')
-
-	elseif event == 'find' then
-		lua_thread.create(playSounds, {
-			DISPATCH_SOUNDS.suspect.lastSeen,
-			DISPATCH_SOUNDS.words.inA,
-			getAreaSoundPatch(vars.area),
-			(
-				vars['vehid'] and DISPATCH_SOUNDS.words.onA or
-				vars['onFoot'] and DISPATCH_SOUNDS.suspect.onFoot or
-				nil
-			),
-			getCarColorSound(vars.vehcolor),
-			getVehSound(vars.vehid)
-		}, 'findVolume', true)
-
-	elseif event == 'code1' then
-		lua_thread.create(playSounds, randomChoice(CODE_1_SOUNDS), 'radioVolume')
-
-	elseif event == 'code0' then
-		lua_thread.create(playSounds, randomChoice(CODE_0_SOUNDS), 'radioVolume')
+		if not varsAndValues[var] then
+			print("Íå íàéäåíà ïåðåìåííàÿ @"..var.." â ñòðîêå \""..message.."\"!")
+		end
 	end
+
+	for k,v in pairs(varsAndValues) do
+		print(k,v)
+	end
+
+	return varsAndValues
 end
-
-
 
 function concatWithGlobalVars(vars, event)
 	if VARS[event] then
@@ -323,6 +321,11 @@ function concatWithGlobalVars(vars, event)
 	end
 	return vars
 end
+
+
+
+
+-- GET EVENT --
 
 function getEventInfo(str, color)
 	local ev, patt, idUserEvent = getEventAndPattern(str, color)
@@ -371,6 +374,7 @@ function getEventAndPattern(str, color)
 end
 
 function getUserPatternAndId(str, color)
+	-- user events
 	if not CFG.user or #CFG.user == 0 then
 		return false
 	end
@@ -409,53 +413,32 @@ function getUserPatternAndId(str, color)
 	end
 end
 
-function getVariablesFromMessage(message, pattern)
-	-- âîçâðàùàåò ìàññèâ {var: value}
-	local arrVars = {}
-	local vars = {}
+function getPatternWithoutVars(pattern)
+	return pattern:gsub("@([%a_]+)", ".+")
+end
 
-	-- èùåì âñå @var
-	local start = 1
-	local var
-	for _ = 1, #message do
-		_, start, var = pattern:find("@([%a_]+)", start)
-		if var then
-			vars[#vars+1] = var
-		else
-			break
-		end
-	end
-
+function varsToRegex(pattern, isGroup)
+	
 	for _, var in ipairs(vars) do
-		local patternWithoutVar = pattern:gsub("@"..var, "(.+)"):gsub("@([%a_]+)", '.+')
+		local patternFindVar = "(.+)"
+		if var == 'n' or var == 'id' then
+			patternFindVar = "(%d+)"
+		elseif var == 'nick' then
+			patternFindVar = "([%a_]+)"
+		end
+
+		local patternWithoutVar = pattern:gsub("@"..var, patternFindVar):gsub("@([%a_]+)", '.+')
 		arrVars[var] = message:match(patternWithoutVar)
 		if arrVars[var] == nil then
 			print("Íå íàéäåíà ïåðåìåííàÿ @"..var.." â ñòðîêå \""..message.."\"!")
 		end
 	end
-
-	return arrVars
-end
-
-function getPatternWithoutVars(pattern)
-	return pattern:gsub("@([%a_]+)", ".+")
 end
 
 
-function esc(s)
-      return (s:gsub('%^', '%%^')
-               :gsub('%$', '%%$')
-               :gsub('%(', '%%(')
-               :gsub('%)', '%%)')
-               :gsub('%.', '%%.')
-               :gsub('%[', '%%[')
-               :gsub('%]', '%%]')
-               :gsub('%*', '%%*')
-               :gsub('%+', '%%+')
-               :gsub('%-', '%%-')
-               :gsub('%?', '%%?'))
-end
 
+
+-- PARCE USER SOUNDS FROM CONFIG FILE --
 
 function parceSounds(idUserEvent, vars)
 	local arrSounds = {}
@@ -726,19 +709,55 @@ function parceSounds(idUserEvent, vars)
 end
 
 
-function getVehIdAndColorByPlayerId(id)
-	local playerInStream, playerHandle = sampGetCharHandleBySampPlayerId(id)
-	if playerInStream and isCharInAnyCar(playerHandle) then
-		local carHandle = storeCarCharIsInNoSave(playerHandle)
-		local vehId = getCarModel(carHandle)
-		local vehColor, _ = getCarColours(carHandle)
 
-		return true, vehId, vehColor
-	else
-		return false
+
+-- PLAY SOUNDS --
+
+function playDispatch(event, vars)
+	local CFGev = CFG[event]
+
+	if event == 'call' then
+		lua_thread.create(playSounds, {
+			DISPATCH_SOUNDS.words.weGot10,
+			randomChoice(DISPATCH_SOUNDS.codesWithIn),
+			getAreaSoundPatch(vars.area)
+		}, 'callsVolume', true)
+
+	elseif event == 'gangActivity' then
+		-- ôóíêöèÿ äëÿ ôàéëîâ òèïà Jefferson2.
+		local msgs = {}
+		for _, fname in ipairs(GANG_ACTIVITY_SOUNDS) do
+			if fname:find(vars.area, 1, true) then
+				msgs[#msgs+1] = fname
+			end
+		end
+
+		lua_thread.create(playSounds, randomChoice(msgs), 'callsVolume')
+
+	elseif event == 'areaAndCode' then
+		lua_thread.create(playSounds, PATH.audio..PATH.areaAndCode..vars.area..'.ogg', 'callsVolume')
+
+	elseif event == 'find' then
+		lua_thread.create(playSounds, {
+			DISPATCH_SOUNDS.suspect.lastSeen,
+			DISPATCH_SOUNDS.words.inA,
+			getAreaSoundPatch(vars.area),
+			(
+				vars['vehid'] and DISPATCH_SOUNDS.words.onA or
+				vars['onFoot'] and DISPATCH_SOUNDS.suspect.onFoot or
+				nil
+			),
+			getCarColorSound(vars.vehcolor),
+			getVehSound(vars.vehid)
+		}, 'findVolume', true)
+
+	elseif event == 'code1' then
+		lua_thread.create(playSounds, randomChoice(CODE_1_SOUNDS), 'radioVolume')
+
+	elseif event == 'code0' then
+		lua_thread.create(playSounds, randomChoice(CODE_0_SOUNDS), 'radioVolume')
 	end
 end
-
 
 function playSounds(array, volume, isPlayRadioOn)
 	-- çàïóñê â lua_thread
@@ -795,6 +814,9 @@ end
 
 
 
+
+-- OTHER GETTERS --
+
 function getMarkerArea(markerId)
 	local markerPos
 	for _, icon in ipairs(MAP_ICONS) do
@@ -821,6 +843,22 @@ function calculateArea(x, y)
 end
 
 
+
+
+-- GETTERS SOUNDS --
+
+function getVehIdAndColorByPlayerId(id)
+	local playerInStream, playerHandle = sampGetCharHandleBySampPlayerId(id)
+	if playerInStream and isCharInAnyCar(playerHandle) then
+		local carHandle = storeCarCharIsInNoSave(playerHandle)
+		local vehId = getCarModel(carHandle)
+		local vehColor, _ = getCarColours(carHandle)
+
+		return true, vehId, vehColor
+	else
+		return false
+	end
+end
 
 function getCarModelByName(nameModel)
 	for id, name in pairs(CAR_NAMES) do
@@ -887,80 +925,9 @@ end
 
 
 
-function sampGetPlayerIdByNickname(nick)
-    local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-    if tostring(nick) == sampGetPlayerNickname(myid) then return myid end
-    for i = 0, 1000 do if sampIsPlayerConnected(i) and sampGetPlayerNickname(i) == tostring(nick) then return i end end
-end
 
+-- ICONS ON MAP --
 
-
-function inArray(variable, arr, isRegEx)
-	for i, element in pairs(arr) do
-		if type(i) == 'string' then
-			element = i
-		end
-		if string.find(variable:tolower(), element:tolower(), 1, not isRegEx) then
-			return true
-		end
-	end
-	return false
-end
-
-function varInElementsArray(var, arr)
-	for _, el in pairs(arr) do
-		if string.find(el:tolower(), var:tolower(), 1, true) then
-			return true
-		end
-	end
-	return false
-end
-
-function randomChoice(arr)
-	-- âîçâðàùàåò ñëó÷àéíûé ýëåìåíò arr
-	if #arr == 0 then
-		local iter = 0
-		newArr = {}
-		for i, it in pairs(arr) do
-			iter = iter + 1
-			newArr[iter] = it
-		end
-		arr = newArr
-	end
-	math.randomseed(os.time())
-	return arr[math.random(#arr)]
-end
-
-function string:split(sep)
-	if sep == nil then
-		sep = "%s"
-	end
-	local t={}
-	for str in string.gmatch(self, "([^"..sep.."]+)") do
-		t[#t+1] = str
-	end
-	return t
-end
-
-function concatTablesWithKeys(t1, t2)
-	for k,v in pairs(t2) do
-		t1[k] = v
-	end
-
-	return t1
-end
-
-function toTable(var)
-	if type(var) ~= 'table' then
-		return {var}
-	else
-		return var
-	end
-end
-
-
-
--- èêîíêè íà êàðòå
 function sampev.onSetMapIcon(id, pos, typeIcon, color, style)
 	-- print("onSetMapIcon id="..id..", type="..typeIcon..", ("..pos.x..", "..pos.y..")")
 	MAP_ICONS[#MAP_ICONS+1] = {
@@ -1009,6 +976,97 @@ end
 
 
 
+
+-- HELP FUNCTIONS --
+
+function inArray(variable, arr, isRegEx)
+	for i, element in pairs(arr) do
+		if type(i) == 'string' then
+			element = i
+		end
+		if string.find(variable:tolower(), element:tolower(), 1, not isRegEx) then
+			return true
+		end
+	end
+	return false
+end
+
+function varInElementsArray(var, arr)
+	for _, el in pairs(arr) do
+		if string.find(el:tolower(), var:tolower(), 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
+function esc(s)
+      return (s:gsub('%^', '%%^')
+               :gsub('%$', '%%$')
+               :gsub('%(', '%%(')
+               :gsub('%)', '%%)')
+               :gsub('%.', '%%.')
+               :gsub('%[', '%%[')
+               :gsub('%]', '%%]')
+               :gsub('%*', '%%*')
+               :gsub('%+', '%%+')
+               :gsub('%-', '%%-')
+               :gsub('%?', '%%?'))
+end
+
+function randomChoice(arr)
+	-- âîçâðàùàåò ñëó÷àéíûé ýëåìåíò arr
+	if #arr == 0 then
+		local iter = 0
+		newArr = {}
+		for i, it in pairs(arr) do
+			iter = iter + 1
+			newArr[iter] = it
+		end
+		arr = newArr
+	end
+	math.randomseed(os.time())
+	return arr[math.random(#arr)]
+end
+
+function string:split(sep)
+	if sep == nil then
+		sep = "%s"
+	end
+	local t={}
+	for str in string.gmatch(self, "([^"..sep.."]+)") do
+		t[#t+1] = str
+	end
+	return t
+end
+
+function concatTablesWithKeys(t1, t2)
+	for k,v in pairs(t2) do
+		t1[k] = v
+	end
+
+	return t1
+end
+
+function toTable(var)
+	if type(var) ~= 'table' then
+		return {var}
+	else
+		return var
+	end
+end
+
+function sampGetPlayerIdByNickname(nick)
+    local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+    if tostring(nick) == sampGetPlayerNickname(myid) then return myid end
+    for i = 0, 1000 do if sampIsPlayerConnected(i) and sampGetPlayerNickname(i) == tostring(nick) then return i end end
+end
+
+
+
+
+-- OTHER FUNCTIONS --
+
 function checkUpdates()
 	if not INI.INI.isCheckUpdates then return end
 
@@ -1034,8 +1092,6 @@ function checkUpdates()
 		end
 	)
 end
-
-
 
 function mainMenu()
 	local text = string.format(
@@ -1156,6 +1212,8 @@ function checkDialogsRespond()
 			chatMessage("Ýâåíò, êîòîðûé âû ïûòàåòåñü âîñïðîèçâåñòè, îòêëþ÷åí.")
 		elseif h == false and s == 'question words' then
 			chatMessage("Â ñîîáùåíèè ïî ðàöèè íàéäåíî âîïðîñèòåëüíîå ñëîâî.")
+		elseif h == false and s == 'text radio' then
+			chatMessage("Â ñîîáùåíèè ïî ðàöèè íå íàéäåíî íèêàêèõ êëþ÷åâûõ ñëîâ.")
 		elseif h == false then
 			chatMessage("Ïðè ïðîâåðêè ñòðîêè ïðîèçîøëà îøèáêà. Ïîäðîáíåå â moonloader.log.")
 		elseif h == true then
@@ -1169,6 +1227,7 @@ function checkDialogsRespond()
 	end
 end
 
+
 function chatMessage(text)
 	return sampAddChatMessage("[Police Disp v"..thisScript().version.."]: {ffffff}"..text, 0xFF3523)
 end
@@ -1176,5 +1235,6 @@ end
 function saveIni()
 	inicfg.save(INI, PATH.config.."config.ini")
 end
+
 -- Ñïàñèáî çà ïîääåðæêó youtube.com/c/Brothersincompany <3
 -- vk.com/donakslua
