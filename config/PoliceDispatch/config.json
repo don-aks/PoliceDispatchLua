@@ -193,8 +193,12 @@
 			// Îáÿçàòåëüíûå ïåðåìåííûå:
 			// @text - ñîîáùåíèå, ïåðåäàâàåìîå ïî ðàöèè.
 
-			"pattern": "^ %[R%] .+ %a+_%a+%[%d+%]%: @text",
-			"useRegexInPattern": true,
+			// Â ïàòòåðíàõ áåç ðåãóëÿðîê âåëèê ðèñê ëîæíîãî ñðàáàòûâàíèÿ.
+			// Åñëè ïðîïèñàëè ñëèøêîì ìàëî èíôû. Ïîýòîìó ïèøèòå ñ óìîì).
+			// Ïàòòåðí ââîäèòå ñ ñàìîãî íà÷àëà ñòðîêè, ó÷èòûâàÿ âîçìîæíûå ïðîáåëû,
+			// êàê â ïðèìåðå íèæå
+			"pattern": " [R] @zvanieandnick [@id]: @text",
+			"useRegexInPattern": false,
 
 			// Âîñïðîèçâîäèòü ëè çâóêè code1 è code0
 			"isPlayShotsFired": true,
@@ -282,6 +286,8 @@
 
 				Íèêàêèõ @1, @2, @ïåðåìåííàÿ, à
 				@one, @two, @var.
+
+				Ïåðåìåííûå @n è @id îáîçíà÷àþò ÷èñëà è ñêðèïò èùåò òîëüêî èõ.
 			*/
 				"vars": {
 					"area": {
@@ -485,8 +491,8 @@
 			"areaAndCode": true
 		},
 		"radio": {
-			"pattern": "^%[CH: 911, S: %d%] %a+ %a+: @text",
-			"useRegexInPattern": true,
+			"pattern": "[CH: 911, S: @n] @nick: @text",
+			"useRegexInPattern": false,
 			"isPlayShotsFired": true
 		},
 		"find": {
