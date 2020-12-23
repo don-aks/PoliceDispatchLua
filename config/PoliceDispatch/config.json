@@ -213,9 +213,16 @@
 					// òî âîñïðîèçâîäèòü ñëåäóþùèå çâóêè.
 					// Óêàçûâàòü íóæíî ïóòü ê çâóêó îòíîñèòåëüíî 
 					// "ÏÓÒÜ_Ê_ÂÀØÅÉ_GTA/moonloader/resources/PoliceDispatchConfigAudio/"
+					// Ïåðåìåííûå è ìàññèâ èç DISP íåëüçÿ óêàçûâàòü.
 					"sounds": "areas/Commerce.wav",
 					// Âîñïðîèçâîäèòü ëè çâóêè âêëþ÷åíèÿ/âûêëþ÷åíèÿ ðàöèè?
 					"isPlayRadioOn": false
+				},
+				{
+					"textFind": "",
+					"useRegexInPattern": false,
+					"sounds": "areas/Commerce.wav",
+					"isPlayRadioOn": true
 				}
 			]
 		},
@@ -495,12 +502,16 @@
 			"useRegexInPattern": false,
 			"isPlayShotsFired": true
 		},
-		"find": {
-			// Êàê íè ñòðàííî, íî ïóñòî.
-		},
 		"user": [
 			{
-				// Ïóñòî
+				"pattern": "[R] Äèñïåò÷åð: @nick çàïðàøèâàåò ïîääåðæêó ïîëèöåéñêîãî äåïàðòàìåíòà.",
+				"useRegexInPattern": false,
+				"sounds": [
+					"suspect/Respond to a 10-.wav",
+					"ten_codes/28 in.wav",
+					"@cityplayer"
+				],
+				"isPlayRadioOn": true
 			}
 		]
 	},
@@ -563,6 +574,81 @@
 				"isPlayRadioOn": true
 			}
 		]
+	},
+	{
+		"name": "Evolve RP",
+		"server": {
+			"name": "Evolve-Rp.Ru"
+		},
+		"radio": {
+			"pattern": "^[^%(]+ %a+_%a+%: @text",
+			"useRegexInPattern": true,
+			"color": -1920073984,
+
+			"isPlayShotsFired": true,
+			"userMessages": [
+				{
+					"textFind": [
+						"10-57",
+						"10 57",
+						"ïîãîíÿ"
+					],
+					"useRegexInPattern": false,
+					"sounds": [
+						"suspect/Respond to a 10-.wav",
+						"ten_codes/37 in.wav",
+						// Íåçàäîêóìåíòèðîâàííàÿ ôóíêöèÿ.
+						// Îçâó÷èâàåò ãîðîä, â êîòîðîì íàõîäèòñÿ èãðîê.
+						// Ðàáîòàåò òàêæå è â ïîëüçîâàòåëüñêèõ ñîáûòèÿõ.
+						"@cityplayer"
+					],
+					"isPlayRadioOn": true
+				},
+				{
+					"textFind": [
+						"10-71",
+						"10 71",
+						"10-72",
+						"10 72",
+						"10-73",
+						"10 73"
+					],
+					"useRegexInPattern": false,
+					"sounds": [
+						"suspect/Respond to a 10-.wav",
+						"ten_codes/71 in.wav",
+						"@cityplayer"
+					],
+					"isPlayRadioOn": true
+				},
+				{
+					"textFind": [
+						"10 99",
+						"10-99"
+					],
+					"useRegexInPattern": false,
+					"sounds": [
+						"suspect/Head to a 10-.wav",
+						"ten_codes/90 in.wav",
+						"@cityplayer"
+					],
+					"isPlayRadioOn": true
+				},
+				{
+					"textFind": [
+						"10 17",
+						"10-17"
+					],
+					"useRegexInPattern": false,
+					"sounds": [
+						"suspect/Respond to a 10-.wav",
+						"ten_codes/17 in.wav",
+						"@cityplayer"
+					],
+					"isPlayRadioOn": true
+				}
+			]
+		}
 	}
 ]
 }
