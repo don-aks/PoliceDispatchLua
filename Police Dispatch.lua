@@ -221,7 +221,6 @@ function handleEvent(str, color)
 	elseif ev == 'radio' then
 		if INI.INI.radioVolume == 0 then return false, 'volume' end
 		if CFG.radio.isPlayShotsFired then
-			print("CFG.radio.isPlayShotsFired = true")
 			if inArray(vars.text, CFG.config.code0Words) then
 				ev = 'code0'
 			elseif inArray(vars.text, CFG.config.code1Words) then
@@ -238,9 +237,16 @@ function handleEvent(str, color)
 		then
 			for _, usermsg in ipairs(CFG.radio.userMessages) do
 				if inArray(vars.text, toTable(usermsg.textFind), usermsg.useRegexInPattern) then
-					local sounds = toTable(usermsg.sounds)
+					local sounds = cloneTable(toTable(usermsg.sounds))
+
 					for i, sound in ipairs(sounds) do
-						sounds[i] = PATH.audio..sound:gsub('/', '\\')
+						print("sound = "..sound)
+						if sound == "@cityplayer" then
+							sounds[i] = getAreaSoundPatch(getPlayerCity(PLAYER_PED))
+						else
+							sounds[i] = PATH.audio..sound:gsub('/', '\\')
+						end
+						print(sounds[i])
 					end
 
 					lua_thread.create(
@@ -250,10 +256,9 @@ function handleEvent(str, color)
 						usermsg.isPlayRadioOn
 					)
 					return
-				else
-					return false, 'not ev'
 				end
 			end
+			return false, 'not ev'
 		elseif inArray(vars.text, QUESTION_WORDS) then
 			return false, 'question words'
 		elseif ev == 'radio' then
@@ -302,12 +307,8 @@ function getVariablesFromMessage(message, pattern)
 		varsAndValues[var] = message:match(patternWithoutVar)
 
 		if not varsAndValues[var] then
-			print("Íå íàéäåíà ïåðåìåííàÿ @"..var.." â ñòðîêå \""..message.."\"!")
+			print("Warning: Íå íàéäåíà ïåðåìåííàÿ @"..var.." â ñòðîêå \""..message.."\"!")
 		end
-	end
-
-	for k,v in pairs(varsAndValues) do
-		print(k,v)
 	end
 
 	return varsAndValues
@@ -336,38 +337,40 @@ function getEventInfo(str, color)
 end
 
 function getEventAndPattern(str, color)
-	for _, key in ipairs({'call', 'find', 'radio'}) do
-		local patterns = CFG[key].pattern
-		local colors = CFG[key].color
-
-		patterns = toTable(patterns)
-		colors = toTable(colors)
-
-		local isColor = true
-		for _, col in pairs(colors) do
-			if col ~= tonumber(color) then
-				isColor = false
-			else
-				isColor = true
-				break
-			end
-		end
-		if not isColor then return false end
-
-		for _, patt in ipairs(patterns) do
-			if not CFG[key].useRegexInPattern then
-				patt = '^'..esc(patt)
-			end
-			local pattWithoutVars = getPatternWithoutVars(patt)
-			if str:find(pattWithoutVars) then
-				return key, patt
-			end
-		end
-	end
-	
+	-- Â ïåðâóþ î÷åðåäü ïðîâåðÿåì user ýâåíòû
 	local userPattern, idUserEvent = getUserPatternAndId(str, color)
 	if userPattern then
 		return 'user', userPattern, idUserEvent
+	end
+
+	for _, key in ipairs({'call', 'find', 'radio'}) do
+		if CFG[key] then
+			local patterns = CFG[key].pattern
+			local colors = CFG[key].color
+
+			patterns = toTable(patterns)
+			colors = toTable(colors)
+
+			local isColor = true
+			for _, col in pairs(colors) do
+				if col ~= tonumber(color) then
+					isColor = false
+				else
+					isColor = true
+					break
+				end
+			end
+
+			for _, patt in ipairs(patterns) do
+				if not CFG[key].useRegexInPattern then
+					patt = '^'..esc(patt)
+				end
+				local pattWithoutVars = getPatternWithoutVars(patt)
+				if str:find(pattWithoutVars) then
+					return key, patt
+				end
+			end
+		end
 	end
 
 	return false
@@ -415,24 +418,6 @@ end
 
 function getPatternWithoutVars(pattern)
 	return pattern:gsub("@([%a_]+)", ".+")
-end
-
-function varsToRegex(pattern, isGroup)
-	
-	for _, var in ipairs(vars) do
-		local patternFindVar = "(.+)"
-		if var == 'n' or var == 'id' then
-			patternFindVar = "(%d+)"
-		elseif var == 'nick' then
-			patternFindVar = "([%a_]+)"
-		end
-
-		local patternWithoutVar = pattern:gsub("@"..var, patternFindVar):gsub("@([%a_]+)", '.+')
-		arrVars[var] = message:match(patternWithoutVar)
-		if arrVars[var] == nil then
-			print("Íå íàéäåíà ïåðåìåííàÿ @"..var.." â ñòðîêå \""..message.."\"!")
-		end
-	end
 end
 
 
@@ -528,6 +513,15 @@ function parceSounds(idUserEvent, vars)
 						print("Ïåðåìåííîé @vehname èëè @vehid íåò â ñòðîêå!")
 						return false
 					end
+				elseif varname == "cityplayer" then
+					local city = getPlayerCity(PLAYER_PED)
+					if not city then
+						local x, y, z = getCharCoordinates(PLAYER_PED)
+						print("Îøèáêà! Íå óäàëîñü îïðåäåëèòü ãîðîä èãðîêà.")
+						print("Êîîðäèíàòû: x = "..x..", y = "..y..", z = "..z)
+						return false
+					end
+					sound = getAreaSoundPatch(city)
 				else
 					print("Îøèáêà â çâóêå '"..sound.."' (¹"..i..") â user ýâåíòå '"..CFGuser.name.."'!")
 					print("Ïåðåìåííîé @"..varname.." íåò â ñòðîêå!")
@@ -842,6 +836,22 @@ function calculateArea(x, y)
 	return "Unknown"
 end
 
+function getPlayerCity(ped)
+	if getCharActiveInterior() ~= 0 then return "San Andreas" end
+
+	local x, y, _ = getCharCoordinates(ped)
+	local reversedAreasArray = cloneTable(AREAS)
+	table.reverse(reversedAreasArray)
+
+	for i, v in ipairs(reversedAreasArray) do
+		if (x >= v[2]) and (y >= v[3]) and (x <= v[5]) and (y <= v[6]) then
+			return v[1]
+		end
+	end
+
+	return nil
+end
+
 
 
 
@@ -1056,6 +1066,29 @@ function toTable(var)
 	end
 end
 
+function cloneTable(t)
+    if type(t) ~= "table" then return t end
+    local meta = getmetatable(t)
+    local target = {}
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            target[k] = cloneTable(v)
+        else
+            target[k] = v
+        end
+    end
+    setmetatable(target, meta)
+    return target
+end
+
+function table.reverse(t)
+	for i = 1, math.floor(#t/2) do
+		v = t[i]
+		t[i] = t[#t-i+1]
+		t[#t-i+1] = v
+	end
+end
+
 function sampGetPlayerIdByNickname(nick)
     local _, myid = sampGetPlayerIdByCharHandle(playerPed)
     if tostring(nick) == sampGetPlayerNickname(myid) then return myid end
@@ -1206,10 +1239,10 @@ function checkDialogsRespond()
 	if result and button == 1 then
 		local h, s = handleEvent(input)
 		if h == false and s == 'not ev' then
-			chatMessage("Ýâåíò íå íàéäåí. Âîçìîæíî âû íåïðàâèëüíî ââåëè ñòðîêó â config.json èëè â ïîëå äëÿ ââîäà.")
+			chatMessage("Ñîáûòèå íå íàéäåíî. Âîçìîæíî âû íåïðàâèëüíî ââåëè ñòðîêó â config.json èëè â ïîëå äëÿ ââîäà.")
 			chatMessage("Ëèáî, åñëè ýòî user-ýâåíò, îí ìîæåò áûòü îòêëþ÷åí â íàñòðîéêàõ.")
 		elseif h == false and s == 'volume' then
-			chatMessage("Ýâåíò, êîòîðûé âû ïûòàåòåñü âîñïðîèçâåñòè, îòêëþ÷åí.")
+			chatMessage("Ñîáûòèå, êîòîðûé âû ïûòàåòåñü âîñïðîèçâåñòè, îòêëþ÷åíî.")
 		elseif h == false and s == 'question words' then
 			chatMessage("Â ñîîáùåíèè ïî ðàöèè íàéäåíî âîïðîñèòåëüíîå ñëîâî.")
 		elseif h == false and s == 'text radio' then
@@ -1217,7 +1250,7 @@ function checkDialogsRespond()
 		elseif h == false then
 			chatMessage("Ïðè ïðîâåðêè ñòðîêè ïðîèçîøëà îøèáêà. Ïîäðîáíåå â moonloader.log.")
 		elseif h == true then
-			chatMessage("Âàøà ñòðîêà ñîäåðæàëà ìàëî äàííûõ, ïîýòîìó ñîõðàíåíà äî ñëåäóþùåãî ýâåíòà.")
+			chatMessage("Âàøà ñòðîêà ñîäåðæàëà ìàëî äàííûõ, ïîýòîìó ñîõðàíåíà äî ñëåäóþùåãî ñîáûòèÿ.")
 			chatMessage("Ïðèìå÷àíèå: êàê òîëüêî ïðèäåò íîâàÿ ñòðîêà â ÷àòå, äàííûå îáíóëÿòüñÿ.")
 		else
 			chatMessage("Êàæåòñÿ, âñå ïðîøëî óñïåøíî.")
