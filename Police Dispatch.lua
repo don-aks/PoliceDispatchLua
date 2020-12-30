@@ -221,7 +221,7 @@ function handleEvent(str, color)
 				varInElementsArray(vars.area, GANG_ACTIVITY_SOUNDS)
 		then
 			ev = 'gangActivity'
-		elseif 	math.random(3) == 2 and
+		elseif 	math.random(2) == 2 and
 				varInElementsArray(vars.area, AREA_AND_CODE_SOUNDS) 
 		then
 			math.randomseed(os.time())
