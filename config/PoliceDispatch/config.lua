@@ -19,26 +19,10 @@ function string.tolower(self)
 	return table.concat(res)
 end
 
-function scandir(directory)
-	--[[
-		Âîçâðàùàåò ìàññèâ âñåõ ôàéëîâ â äèðåêòîðèè.
-	]]
-    local i, t = 0, {}
-    local pfile = io.popen('dir "'..directory..'" /b')
-    for filename in pfile:lines() do
-        i = i + 1
-        -- åñëè ñîäåðæèò òî÷êó (ôàéë, à íå ïàïêà)
-        if filename:find("%.") then
-        	t[i] = directory..filename
-        end
-    end
-    pfile:close()
-    return t
-end
-
 
 PATH = {
 	config=getWorkingDirectory().."\\config\\PoliceDispatch\\",
+	ini="PoliceDispatch/config.ini",
 	audio=getWorkingDirectory().."\\resource\\PoliceDispatchAudio\\",
 	area="areas\\",
 	code1="code1\\",
@@ -95,6 +79,23 @@ DISPATCH_SOUNDS = {
 		attempt=PATH.audio.."ten_codes\\attempt.wav"
 	}
 }
+
+function scandir(directory)
+	--[[
+		Âîçâðàùàåò ìàññèâ âñåõ ôàéëîâ â äèðåêòîðèè.
+	]]
+    local i, t = 0, {}
+    local pfile = io.popen('dir "'..directory..'" /b')
+    for filename in pfile:lines() do
+        i = i + 1
+        -- åñëè ñîäåðæèò òî÷êó (ôàéë, à íå ïàïêà)
+        if filename:find("%.") then
+        	t[i] = directory..filename
+        end
+    end
+    pfile:close()
+    return t
+end
 
 -- Õðàíèò â ñåáå âñå ôàéëû 
 CODE_0_SOUNDS = scandir(PATH.audio..PATH.code0)

@@ -80,7 +80,7 @@ function main()
 			radioVolume=3.5,
 			userVolume=3
 		}
-	}, PATH.config.."/config.ini")
+	}, PATH.ini)
 
 	-- Îáíîâëåíèå âêëþ÷åíèé/îòêëþ÷åíèé 
 	-- ïîëüçîâàòåëüñêèõ ýâåíòîâ
@@ -243,6 +243,8 @@ function handleEvent(str, color)
 						print("sound = "..sound)
 						if sound == "@cityplayer" then
 							sounds[i] = getAreaSoundPatch(getPlayerCity(PLAYER_PED))
+						elseif sound == "@areaplayer" then
+							sounds[i] = getAreaSoundPatch(getPlayerArea(PLAYER_PED))
 						else
 							sounds[i] = PATH.audio..sound:gsub('/', '\\')
 						end
@@ -522,6 +524,15 @@ function parceSounds(idUserEvent, vars)
 						return false
 					end
 					sound = getAreaSoundPatch(city)
+				elseif varname == "areaplayer" then
+					local area = getPlayerArea(PLAYER_PED)
+					if not area then
+						local x, y, z = getCharCoordinates(PLAYER_PED)
+						print("Îøèáêà! Íå óäàëîñü îïðåäåëèòü ðàéîí èãðîêà.")
+						print("Êîîðäèíàòû: x = "..x..", y = "..y..", z = "..z)
+						return false
+					end
+					sound = getAreaSoundPatch(area)
 				else
 					print("Îøèáêà â çâóêå '"..sound.."' (¹"..i..") â user ýâåíòå '"..CFGuser.name.."'!")
 					print("Ïåðåìåííîé @"..varname.." íåò â ñòðîêå!")
@@ -837,7 +848,7 @@ function calculateArea(x, y)
 end
 
 function getPlayerCity(ped)
-	if getCharActiveInterior() ~= 0 then return "San Andreas" end
+	if getCharActiveInterior(ped) ~= 0 then return "San Andreas" end
 
 	local x, y, _ = getCharCoordinates(ped)
 	local reversedAreasArray = cloneTable(AREAS)
@@ -850,6 +861,12 @@ function getPlayerCity(ped)
 	end
 
 	return nil
+end
+
+function getPlayerArea(ped)
+	if getCharActiveInterior(ped) ~= 0 then return "San Andreas" end
+	local x, y, _ = getCharCoordinates(ped)
+	return calculateArea(x, y)
 end
 
 
@@ -1190,8 +1207,10 @@ function checkDialogsRespond()
 					BTN1, BTN2, 4)
 			end
 		elseif list == 8 then
-			sampShowDialog(20003, "Ïðîâåðêà ïàòòåðíà", "Ââåäèòå íóæíóþ ñòðîêó èç ÷àòà äëÿ ïðîâåðêè è âîñïðîèçâåäåíèÿ:",
-				BTN1, BTN2, 1)
+			sampShowDialog(20003, "Ïðîâåðêà ïàòòåðíà", 
+				"Ââåäèòå íóæíóþ ñòðîêó èç ÷àòà äëÿ ïðîâåðêè è âîñïðîèçâåäåíèÿ:\n"..
+				"Äëÿ çàäàíèÿ öâåòà ñòðîêè èñïîëüçóéòå âíà÷àëå R: (öâåò áåç #) (Ñòðîêà).",
+			BTN1, BTN2, 1)
 		elseif list == 9 then
 			mainMenu()
 		elseif list == 10 then
@@ -1237,12 +1256,19 @@ function checkDialogsRespond()
 	-- Ïðîâåðêà ñòðîêè
 	local result, button, _, input = sampHasDialogRespond(20003)
 	if result and button == 1 then
-		local h, s = handleEvent(input)
+		local color = input:match("^R: (%w+) ")
+		input = input:gsub("^R: (%w+) ", "")
+
+		if color and not tonumber(color) then
+			color = tonumber("0x"..color)
+		end
+
+		local h, s = handleEvent(input, color)
 		if h == false and s == 'not ev' then
 			chatMessage("Ñîáûòèå íå íàéäåíî. Âîçìîæíî âû íåïðàâèëüíî ââåëè ñòðîêó â config.json èëè â ïîëå äëÿ ââîäà.")
 			chatMessage("Ëèáî, åñëè ýòî user-ýâåíò, îí ìîæåò áûòü îòêëþ÷åí â íàñòðîéêàõ.")
 		elseif h == false and s == 'volume' then
-			chatMessage("Ñîáûòèå, êîòîðûé âû ïûòàåòåñü âîñïðîèçâåñòè, îòêëþ÷åíî.")
+			chatMessage("Ñîáûòèå, êîòîðîå âû ïûòàåòåñü âîñïðîèçâåñòè, îòêëþ÷åíî.")
 		elseif h == false and s == 'question words' then
 			chatMessage("Â ñîîáùåíèè ïî ðàöèè íàéäåíî âîïðîñèòåëüíîå ñëîâî.")
 		elseif h == false and s == 'text radio' then
@@ -1266,7 +1292,7 @@ function chatMessage(text)
 end
 
 function saveIni()
-	inicfg.save(INI, PATH.config.."config.ini")
+	inicfg.save(INI, PATH.ini)
 end
 
 -- Ñïàñèáî çà ïîääåðæêó youtube.com/c/Brothersincompany <3
