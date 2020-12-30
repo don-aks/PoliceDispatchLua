@@ -7,7 +7,6 @@ script_version_number(2)
 
 require 'lib.moonloader'
 local download_status = require('lib.moonloader').download_status
-local sampev = require 'lib.samp.events'
 local inicfg = require 'inicfg'
 local memory = require 'memory'
 
@@ -18,6 +17,17 @@ local VARS = {}
 local MAP_ICONS = {}
 local CFG, INI
 
+
+function chatMessage(text)
+	return sampAddChatMessage("[Police Disp v"..thisScript().version.."]: {ffffff}"..text, 0xFF3523)
+end
+
+if not doesFileExist(getWorkingDirectory().."\\lib\\samp\\events.lua") then
+	chatMessage("Óñòàíîâèòå SAMP.LUA! {32B4FF}blast.hk/threads/59503{FFFFFF}.")
+	thisScript():unload()
+	return
+end
+local sampev = require 'lib.samp.events'
 
 function main()
 	if not isSampLoaded() or not isSampfuncsLoaded() then return end
@@ -1196,10 +1206,12 @@ function checkDialogsRespond()
 			mainMenu()
 		elseif list == 7 then
 			local userEvents = ""
-			for i, it in ipairs(INI[CFG.name.."_UserEvents"]) do
-				userEvents = userEvents .. CFG.user[i].name.."\t"..(it and "{21C90E}Âêë." or "{C91A14}Îòêë.").."\n"
+			if INI[CFG.name.."_UserEvents"] then
+				for i, it in ipairs(INI[CFG.name.."_UserEvents"]) do
+					userEvents = userEvents .. CFG.user[i].name.."\t"..(it and "{21C90E}Âêë." or "{C91A14}Îòêë.").."\n"
+				end
 			end
-			if userEvent == "" then
+			if userEvents == "" then
 				chatMessage("User-ýâåíòîâ íå íàéäåíî!")
 				mainMenu()
 			else
@@ -1286,10 +1298,6 @@ function checkDialogsRespond()
 	end
 end
 
-
-function chatMessage(text)
-	return sampAddChatMessage("[Police Disp v"..thisScript().version.."]: {ffffff}"..text, 0xFF3523)
-end
 
 function saveIni()
 	inicfg.save(INI, PATH.ini)
