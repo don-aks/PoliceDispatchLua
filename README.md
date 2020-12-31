@@ -94,6 +94,7 @@
 Больше примеров и пояснений можно найти в самом конфиг файле.
 
 ## Демонстрация работы скрипта на видео
-https://www.youtube.com/embed/fyLzhiWMPBo
+https://www.youtube.com/watch?v=fyLzhiWMPBo
 
 Страница скрипта на _BlastHack_: https://blast.hk/threads/59503/
+Группа ВК автора: https://vk.com/donakslua
