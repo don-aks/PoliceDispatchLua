@@ -1007,8 +1007,36 @@ end
 
 function sampev.onDisableCheckpoint()
 	-- print("onDisableCheckpoint")
-	for i, v in ipairs(MAP_ICONS) do
-		if v.id == 'check' then
+	for i, icon in ipairs(MAP_ICONS) do
+		if icon.id == 'check' then
+			MAP_ICONS[i] = nil
+		end
+	end
+end
+
+-- ãîíî÷íûé ÷åêïîèíò (id: 2)
+function sampev.onSetRaceCheckpoint(type, pos, nextPos, size)
+	-- print("onSetRaceCheckpoint ("..pos.x..", "..pos.y..")")
+	-- Óäàëÿåì ïðåäûäóùóþ ìåòêó
+	for i, icon in ipairs(MAP_ICONS) do
+		if icon.id == 'race' then
+			print("Óäàëèëè ïðåäûäóùèé")
+			MAP_ICONS[i] = nil
+			break
+		end
+	end
+
+	MAP_ICONS[#MAP_ICONS+1] = {
+		id='race',
+		pos=pos,
+		type=2
+	}
+end
+
+function sampev.onDisableRaceCheckpoint()
+	-- print("onDisableRaceCheckpoint")
+	for i, icon in ipairs(MAP_ICONS) do
+		if icon.id == 'race' then
 			MAP_ICONS[i] = nil
 		end
 	end
