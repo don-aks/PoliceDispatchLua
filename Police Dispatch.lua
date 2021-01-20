@@ -22,12 +22,12 @@ function chatMessage(text)
 	return sampAddChatMessage("[Police Disp v"..thisScript().version.."]: {ffffff}"..text, 0xFF3523)
 end
 
-if not doesFileExist(getWorkingDirectory().."\\lib\\samp\\events.lua") then
+local res, sampev = pcall(require, 'lib.samp.events')
+if not res then
 	chatMessage("Óñòàíîâèòå SAMP.LUA! {32B4FF}blast.hk/threads/59503{FFFFFF}.")
 	thisScript():unload()
 	return
 end
-local sampev = require 'lib.samp.events'
 
 function main()
 	if not isSampLoaded() or not isSampfuncsLoaded() then return end
@@ -207,13 +207,13 @@ function handleEvent(str, color)
 				VARS['call'] = vars
 				return true
 			else
-				print("Îøèáêà! Ïåðìåííàÿ @area èëè @text íå óêàçàíà â ýâåíòå call!")
+				print("Îøèáêà! Ïåðåìåííàÿ @area èëè @text íå óêàçàíà â ýâåíòå call!")
 				return false
 			end
 		end
 
 		if inArray(vars.text, CFG.config.stopWords) then
-			return
+			return false, 'stopWords'
 		end
 
 		if 		CFG.call.isPlayGangActivity and
@@ -284,12 +284,13 @@ function handleEvent(str, color)
 			lua_thread.create(playSounds, arrSounds, 'userVolume', CFG.user[idUserEvent].isPlayRadioOn)
 			return
 		else
-			print('Ìàññèâ "sounds" â ïîëüçîâàòåëüñêîì ýâåíòå '..CFG.user[idUserEvent].name..' íå óêàçàí!')
+			print('Ïðîèçîøëà îøèáêà â ìàññèâå "sounds" â ïîëüçîâàòåëüñêîì ýâåíòå '..CFG.user[idUserEvent].name..' !')
+			print("Ëèáî îí íå îïðåäåë¸í.")
 			return false
 		end
 	end
 
-	playDispatch(ev, vars)
+	return playDispatch(ev, vars)
 end
 
 function getVariablesFromMessage(message, pattern)
@@ -312,7 +313,7 @@ function getVariablesFromMessage(message, pattern)
 	for _, var in ipairs(vars) do
 		local patternFindVar = "(.+)"
 		if var == 'n' or var == 'id' then
-			patternFindVar = "(%d+)"
+			patternFindVar = "(%%d+)"
 		end
 
 		local patternWithoutVar = pattern:gsub("@"..var, patternFindVar):gsub("@([%a_]+)", '.+')
@@ -965,6 +966,7 @@ end
 
 -- ICONS ON MAP --
 
+-- èêîíêà íà êàðòå (id: ñòàíäàðòíûé)
 function sampev.onSetMapIcon(id, pos, typeIcon, color, style)
 	-- print("onSetMapIcon id="..id..", type="..typeIcon..", ("..pos.x..", "..pos.y..")")
 	MAP_ICONS[#MAP_ICONS+1] = {
@@ -976,19 +978,20 @@ end
 
 function sampev.onRemoveMapIcon(id)
 	-- print("onRemoveMapIcon id="..id)
-	for i, v in ipairs(MAP_ICONS) do
-		if v.id == id then
+	for i, icon in ipairs(MAP_ICONS) do
+		if icon.id == id then
 			MAP_ICONS[i] = nil
 		end
 	end
 end
 
--- êðàñíàÿ ìåòêà
+
+-- êðàñíàÿ ìåòêà (id: 1)
 function sampev.onSetCheckpoint(pos, radius)
 	-- print("onSetCheckpoint ("..pos.x..", "..pos.y..")")
 	-- Óäàëÿåì ïðåäûäóùóþ ìåòêó
 	for i, icon in ipairs(MAP_ICONS) do
-		if icon.type == 1 then
+		if icon.id == 'check' then
 			print("Óäàëèëè ïðåäûäóùèé")
 			MAP_ICONS[i] = nil
 			break
@@ -1285,6 +1288,8 @@ function checkDialogsRespond()
 			chatMessage("Â ñîîáùåíèè ïî ðàöèè íàéäåíî âîïðîñèòåëüíîå ñëîâî.")
 		elseif h == false and s == 'text radio' then
 			chatMessage("Â ñîîáùåíèè ïî ðàöèè íå íàéäåíî íèêàêèõ êëþ÷åâûõ ñëîâ.")
+		elseif h == false and s == 'stopWords' then
+			chatMessage('Â âûçîâå íàéäåíû "ñòîï-ñëîâà" èç config.json.')
 		elseif h == false then
 			chatMessage("Ïðè ïðîâåðêè ñòðîêè ïðîèçîøëà îøèáêà. Ïîäðîáíåå â moonloader.log.")
 		elseif h == true then
