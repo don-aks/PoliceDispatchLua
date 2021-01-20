@@ -150,7 +150,8 @@
 		/*	id èêîíêè íà êàðòå, êîîðäèíàòû êîòîðîé íóæíî èñïîëüçîâàòü â êà÷åñòâå ...
 			... ðàéîíà, êîòîðûé îçâó÷èâàåò äèñïåò÷åð (@area).
 			id èêîíîê: https://gtamods.com/wiki/Blip#San_Andreas
-			åñëè îáû÷íûé êðàñíûé ìàðêåð, óêàçûâàéòå 1
+			åñëè îáû÷íûé êðàñíûé ìàðêåð, óêàçûâàéòå 1,
+			åñëè ãîíî÷íûé ÷åêïîèíò, óêàçûâàéòå 2
 		*/
 			"markerId": 1
 		},
@@ -648,10 +649,54 @@
 	},
 
 	{
-		"name": "Äëÿ ÀÐÇ íåò êîíôèãà. Íàïèøè â ÂÊ.",
+		"name": "Arizona RP",
 		"server": {
 			"name": "Arizona Role Play |"
-		}
+		},
+		"radio": {
+			"pattern": "^%[R%] .+ %a+_%a+%[%d+%]:[^%(]@text",
+			"useRegexInPattern": true,
+			"isPlayShotsFired": true
+		},
+		"call": {
+			"pattern": "{B03131}@nick[@id]{FFFFFF} ñ ãîðîäà \"@area\", âûçûâàåò ïîëèöèþ, ìåñòîïîëîæåíèå: {B03131}@text{FFFFFF}.",
+			"useRegexInPattern": false,
+
+			"isPlayGangActivity": true,
+			"areaAndCode": true
+		},
+		"user": [
+			{
+				"name": "/bk",
+				"pattern": "Âàæíî! {FFFFFF}@nick[@id] âûçûâàåò ïîäêðåïëåíèå ñ ïðè÷èíîé @reason!",
+				"useRegexInPattern": false,
+
+				"markerId": 2,
+				"sounds": [
+					"suspect/Respond to a 10-.wav",
+					"ten_codes/17 in.wav",
+					"@area"
+				],
+
+				"isPlayRadioOn": true
+			},
+
+			{
+				"name": "/su",
+				"pattern": [
+					"Âíèìàíèå! {FFFFFF}@nick[@id] áûë(à) îáúÿâëåí(a) â ðîçûñê! Îáâèíèòåëü: @nick[@id] | Ïðè÷èíà: {FF6347}@reason",
+					"Âíèìàíèå! {FFFFFF}@nick[@id]{FF6347} áûë(à) îáúÿâëåí(a) â ðîçûñê! Ïðè÷èíà: "
+				],
+				"useRegexInPattern": false,
+
+				"sounds": [
+					"suspect/We got a 10-.wav",
+					"ten_codes/37.wav"
+				],
+
+				"isPlayRadioOn": true
+			}
+		]
 	},
 
 	{
