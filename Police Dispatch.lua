@@ -151,7 +151,6 @@ function handleEvent(str, color)
 	if not ev then
 		-- î÷èùàåì, ïîòîìó ÷òî èíôà äîëæíà áûòü íà ñëåäóþùåé ñòðîêå
 		if #VARS > 0 then
-			print("VARS = {}")
 			VARS = {}
 		end
 		return false, 'not ev'
@@ -160,11 +159,9 @@ function handleEvent(str, color)
 	local vars = getVariablesFromMessage(str, pattern)
 	-- ×åêàåì îñòàëñÿ ëè ãëîáàëüíûé VARS îò ïðåäûäóùåãî âûçîâà.
 	vars = concatWithGlobalVars(vars, ev)
-	print('ev = '..tostring(ev))
 
 	if ev == 'find' then
 		if INI.INI.findVolume == 0 then return false, 'volume' end
-		print("find")
 		-- Åñëè íåò îáÿçàòåëüíîãî ïàðàìåòðà
 		if not vars.area then
 			if markerId then
@@ -238,8 +235,6 @@ function handleEvent(str, color)
 			end
 		end
 
-		print('now ev = '..ev)
-
 		-- Ïîëüçîâàòåëüñêèå ýâåíòû íà ðàäèî
 		if 	ev == 'radio' and
 			type(CFG.radio.userMessages) == "table" and
@@ -250,7 +245,6 @@ function handleEvent(str, color)
 					local sounds = cloneTable(toTable(usermsg.sounds))
 
 					for i, sound in ipairs(sounds) do
-						print("sound = "..sound)
 						if sound == "@cityplayer" then
 							sounds[i] = getAreaSoundPatch(getPlayerCity(PLAYER_PED))
 						elseif sound == "@areaplayer" then
@@ -258,7 +252,6 @@ function handleEvent(str, color)
 						else
 							sounds[i] = PATH.audio..sound:gsub('/', '\\')
 						end
-						print(sounds[i])
 					end
 
 					lua_thread.create(
@@ -992,7 +985,6 @@ function sampev.onSetCheckpoint(pos, radius)
 	-- Óäàëÿåì ïðåäûäóùóþ ìåòêó
 	for i, icon in ipairs(MAP_ICONS) do
 		if icon.id == 'check' then
-			print("Óäàëèëè ïðåäûäóùèé")
 			MAP_ICONS[i] = nil
 			break
 		end
@@ -1020,7 +1012,6 @@ function sampev.onSetRaceCheckpoint(type, pos, nextPos, size)
 	-- Óäàëÿåì ïðåäûäóùóþ ìåòêó
 	for i, icon in ipairs(MAP_ICONS) do
 		if icon.id == 'race' then
-			print("Óäàëèëè ïðåäûäóùèé")
 			MAP_ICONS[i] = nil
 			break
 		end
