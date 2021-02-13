@@ -1,9 +1,9 @@
 -- encoding: cyrillic (windows 1251)
 script_name('Police Dispatch')
 script_author('donaks')
-script_version('2.0-beta-final')
+script_version('2.0')
 script_url("blast.hk/threads/59503")
-script_version_number(3)
+script_version_number(4)
 
 require 'lib.moonloader'
 local download_status = require('lib.moonloader').download_status
